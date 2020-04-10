@@ -1,0 +1,674 @@
+{
+  "header_types" : [
+    {
+      "name" : "scalars_0",
+      "id" : 0,
+      "fields" : [
+        ["mta_dir_tmp_0", 32, false],
+        ["mail_counter_tmp_0", 32, false]
+      ]
+    },
+    {
+      "name" : "standard_metadata",
+      "id" : 1,
+      "fields" : [
+        ["ingress_port", 9, false],
+        ["egress_spec", 9, false],
+        ["egress_port", 9, false],
+        ["instance_type", 32, false],
+        ["packet_length", 32, false],
+        ["enq_timestamp", 32, false],
+        ["enq_qdepth", 19, false],
+        ["deq_timedelta", 32, false],
+        ["deq_qdepth", 19, false],
+        ["ingress_global_timestamp", 48, false],
+        ["egress_global_timestamp", 48, false],
+        ["mcast_grp", 16, false],
+        ["egress_rid", 16, false],
+        ["checksum_error", 1, false],
+        ["parser_error", 32, false],
+        ["priority", 3, false],
+        ["_padding", 3, false]
+      ]
+    },
+    {
+      "name" : "H",
+      "id" : 2,
+      "fields" : []
+    }
+  ],
+  "headers" : [
+    {
+      "name" : "scalars",
+      "id" : 0,
+      "header_type" : "scalars_0",
+      "metadata" : true,
+      "pi_omit" : true
+    },
+    {
+      "name" : "standard_metadata",
+      "id" : 1,
+      "header_type" : "standard_metadata",
+      "metadata" : true,
+      "pi_omit" : true
+    },
+    {
+      "name" : "H_header",
+      "id" : 2,
+      "header_type" : "H",
+      "metadata" : false,
+      "pi_omit" : true
+    }
+  ],
+  "header_stacks" : [],
+  "header_union_types" : [],
+  "header_unions" : [],
+  "header_union_stacks" : [],
+  "field_lists" : [],
+  "errors" : [
+    ["NoError", 0],
+    ["PacketTooShort", 1],
+    ["NoMatch", 2],
+    ["StackOutOfBounds", 3],
+    ["HeaderTooShort", 4],
+    ["ParserTimeout", 5],
+    ["ParserInvalidArgument", 6]
+  ],
+  "enums" : [],
+  "parsers" : [
+    {
+      "name" : "parser",
+      "id" : 0,
+      "init_state" : "start",
+      "parse_states" : [
+        {
+          "name" : "start",
+          "id" : 0,
+          "parser_ops" : [],
+          "transitions" : [
+            {
+              "value" : "default",
+              "mask" : null,
+              "next_state" : null
+            }
+          ],
+          "transition_key" : []
+        }
+      ]
+    }
+  ],
+  "parse_vsets" : [],
+  "deparsers" : [
+    {
+      "name" : "deparser",
+      "id" : 0,
+      "source_info" : {
+        "filename" : "spam_detection.p4",
+        "line" : 76,
+        "column" : 8,
+        "source_fragment" : "MyDeparser"
+      },
+      "order" : [],
+      "primitives" : []
+    }
+  ],
+  "meter_arrays" : [],
+  "counter_arrays" : [],
+  "register_arrays" : [
+    {
+      "name" : "mta_dir",
+      "id" : 0,
+      "source_info" : {
+        "filename" : "spam_detection.p4",
+        "line" : 5,
+        "column" : 21,
+        "source_fragment" : "mta_dir"
+      },
+      "size" : 1,
+      "bitwidth" : 32
+    },
+    {
+      "name" : "mail_counter",
+      "id" : 1,
+      "source_info" : {
+        "filename" : "spam_detection.p4",
+        "line" : 6,
+        "column" : 21,
+        "source_fragment" : "mail_counter"
+      },
+      "size" : 1,
+      "bitwidth" : 32
+    }
+  ],
+  "calculations" : [],
+  "learn_lists" : [],
+  "actions" : [
+    {
+      "name" : "spam_detection49",
+      "id" : 0,
+      "runtime_data" : [],
+      "primitives" : [
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "mta_dir_tmp_0"]
+            },
+            {
+              "type" : "hexstr",
+              "value" : "0x00000002"
+            }
+          ],
+          "source_info" : {
+            "filename" : "spam_detection.p4",
+            "line" : 49,
+            "column" : 16,
+            "source_fragment" : "mta_dir_tmp = 2"
+          }
+        },
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "mail_counter_tmp_0"]
+            },
+            {
+              "type" : "hexstr",
+              "value" : "0x00000000"
+            }
+          ],
+          "source_info" : {
+            "filename" : "spam_detection.p4",
+            "line" : 50,
+            "column" : 16,
+            "source_fragment" : "mail_counter_tmp = 0"
+          }
+        }
+      ]
+    },
+    {
+      "name" : "spam_detection45",
+      "id" : 1,
+      "runtime_data" : [],
+      "primitives" : [
+        {
+          "op" : "register_read",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "mta_dir_tmp_0"]
+            },
+            {
+              "type" : "register_array",
+              "value" : "mta_dir"
+            },
+            {
+              "type" : "hexstr",
+              "value" : "0x00000000"
+            }
+          ],
+          "source_info" : {
+            "filename" : "spam_detection.p4",
+            "line" : 45,
+            "column" : 12,
+            "source_fragment" : "mta_dir.read(mta_dir_tmp, 0)"
+          }
+        },
+        {
+          "op" : "register_read",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "mail_counter_tmp_0"]
+            },
+            {
+              "type" : "register_array",
+              "value" : "mail_counter"
+            },
+            {
+              "type" : "hexstr",
+              "value" : "0x00000000"
+            }
+          ],
+          "source_info" : {
+            "filename" : "spam_detection.p4",
+            "line" : 46,
+            "column" : 12,
+            "source_fragment" : "mail_counter.read(mail_counter_tmp, 0)"
+          }
+        }
+      ]
+    },
+    {
+      "name" : "spam_detection56",
+      "id" : 2,
+      "runtime_data" : [],
+      "primitives" : [
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "mta_dir_tmp_0"]
+            },
+            {
+              "type" : "hexstr",
+              "value" : "0x00000003"
+            }
+          ],
+          "source_info" : {
+            "filename" : "spam_detection.p4",
+            "line" : 56,
+            "column" : 20,
+            "source_fragment" : "mta_dir_tmp = 3"
+          }
+        }
+      ]
+    },
+    {
+      "name" : "spam_detection54",
+      "id" : 3,
+      "runtime_data" : [],
+      "primitives" : [
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "mail_counter_tmp_0"]
+            },
+            {
+              "type" : "expression",
+              "value" : {
+                "type" : "expression",
+                "value" : {
+                  "op" : "&",
+                  "left" : {
+                    "type" : "expression",
+                    "value" : {
+                      "op" : "+",
+                      "left" : {
+                        "type" : "field",
+                        "value" : ["scalars", "mail_counter_tmp_0"]
+                      },
+                      "right" : {
+                        "type" : "hexstr",
+                        "value" : "0x00000001"
+                      }
+                    }
+                  },
+                  "right" : {
+                    "type" : "hexstr",
+                    "value" : "0xffffffff"
+                  }
+                }
+              }
+            }
+          ],
+          "source_info" : {
+            "filename" : "spam_detection.p4",
+            "line" : 54,
+            "column" : 16,
+            "source_fragment" : "mail_counter_tmp = mail_counter_tmp + 1"
+          }
+        }
+      ]
+    },
+    {
+      "name" : "spam_detection60",
+      "id" : 4,
+      "runtime_data" : [],
+      "primitives" : [
+        {
+          "op" : "register_write",
+          "parameters" : [
+            {
+              "type" : "register_array",
+              "value" : "mta_dir"
+            },
+            {
+              "type" : "hexstr",
+              "value" : "0x00000000"
+            },
+            {
+              "type" : "field",
+              "value" : ["scalars", "mta_dir_tmp_0"]
+            }
+          ],
+          "source_info" : {
+            "filename" : "spam_detection.p4",
+            "line" : 60,
+            "column" : 12,
+            "source_fragment" : "mta_dir.write(0, mta_dir_tmp)"
+          }
+        },
+        {
+          "op" : "register_write",
+          "parameters" : [
+            {
+              "type" : "register_array",
+              "value" : "mail_counter"
+            },
+            {
+              "type" : "hexstr",
+              "value" : "0x00000000"
+            },
+            {
+              "type" : "field",
+              "value" : ["scalars", "mail_counter_tmp_0"]
+            }
+          ],
+          "source_info" : {
+            "filename" : "spam_detection.p4",
+            "line" : 61,
+            "column" : 12,
+            "source_fragment" : "mail_counter.write(0, mail_counter_tmp)"
+          }
+        }
+      ]
+    }
+  ],
+  "pipelines" : [
+    {
+      "name" : "ingress",
+      "id" : 0,
+      "source_info" : {
+        "filename" : "spam_detection.p4",
+        "line" : 38,
+        "column" : 8,
+        "source_fragment" : "MyIngress"
+      },
+      "init_table" : "tbl_spam_detection45",
+      "tables" : [
+        {
+          "name" : "tbl_spam_detection45",
+          "id" : 0,
+          "source_info" : {
+            "filename" : "spam_detection.p4",
+            "line" : 45,
+            "column" : 12,
+            "source_fragment" : "mta_dir.read(mta_dir_tmp, 0); ..."
+          },
+          "key" : [],
+          "match_type" : "exact",
+          "type" : "simple",
+          "max_size" : 1024,
+          "with_counters" : false,
+          "support_timeout" : false,
+          "direct_meters" : null,
+          "action_ids" : [1],
+          "actions" : ["spam_detection45"],
+          "base_default_next" : "node_3",
+          "next_tables" : {
+            "spam_detection45" : "node_3"
+          },
+          "default_entry" : {
+            "action_id" : 1,
+            "action_const" : true,
+            "action_data" : [],
+            "action_entry_const" : true
+          }
+        },
+        {
+          "name" : "tbl_spam_detection49",
+          "id" : 1,
+          "source_info" : {
+            "filename" : "spam_detection.p4",
+            "line" : 49,
+            "column" : 28,
+            "source_fragment" : "= 2; ..."
+          },
+          "key" : [],
+          "match_type" : "exact",
+          "type" : "simple",
+          "max_size" : 1024,
+          "with_counters" : false,
+          "support_timeout" : false,
+          "direct_meters" : null,
+          "action_ids" : [0],
+          "actions" : ["spam_detection49"],
+          "base_default_next" : "node_5",
+          "next_tables" : {
+            "spam_detection49" : "node_5"
+          },
+          "default_entry" : {
+            "action_id" : 0,
+            "action_const" : true,
+            "action_data" : [],
+            "action_entry_const" : true
+          }
+        },
+        {
+          "name" : "tbl_spam_detection54",
+          "id" : 2,
+          "source_info" : {
+            "filename" : "spam_detection.p4",
+            "line" : 54,
+            "column" : 33,
+            "source_fragment" : "="
+          },
+          "key" : [],
+          "match_type" : "exact",
+          "type" : "simple",
+          "max_size" : 1024,
+          "with_counters" : false,
+          "support_timeout" : false,
+          "direct_meters" : null,
+          "action_ids" : [3],
+          "actions" : ["spam_detection54"],
+          "base_default_next" : "node_7",
+          "next_tables" : {
+            "spam_detection54" : "node_7"
+          },
+          "default_entry" : {
+            "action_id" : 3,
+            "action_const" : true,
+            "action_data" : [],
+            "action_entry_const" : true
+          }
+        },
+        {
+          "name" : "tbl_spam_detection56",
+          "id" : 3,
+          "source_info" : {
+            "filename" : "spam_detection.p4",
+            "line" : 56,
+            "column" : 32,
+            "source_fragment" : "="
+          },
+          "key" : [],
+          "match_type" : "exact",
+          "type" : "simple",
+          "max_size" : 1024,
+          "with_counters" : false,
+          "support_timeout" : false,
+          "direct_meters" : null,
+          "action_ids" : [2],
+          "actions" : ["spam_detection56"],
+          "base_default_next" : "tbl_spam_detection60",
+          "next_tables" : {
+            "spam_detection56" : "tbl_spam_detection60"
+          },
+          "default_entry" : {
+            "action_id" : 2,
+            "action_const" : true,
+            "action_data" : [],
+            "action_entry_const" : true
+          }
+        },
+        {
+          "name" : "tbl_spam_detection60",
+          "id" : 4,
+          "source_info" : {
+            "filename" : "spam_detection.p4",
+            "line" : 60,
+            "column" : 12,
+            "source_fragment" : "mta_dir.write(0, mta_dir_tmp); ..."
+          },
+          "key" : [],
+          "match_type" : "exact",
+          "type" : "simple",
+          "max_size" : 1024,
+          "with_counters" : false,
+          "support_timeout" : false,
+          "direct_meters" : null,
+          "action_ids" : [4],
+          "actions" : ["spam_detection60"],
+          "base_default_next" : null,
+          "next_tables" : {
+            "spam_detection60" : null
+          },
+          "default_entry" : {
+            "action_id" : 4,
+            "action_const" : true,
+            "action_data" : [],
+            "action_entry_const" : true
+          }
+        }
+      ],
+      "action_profiles" : [],
+      "conditionals" : [
+        {
+          "name" : "node_3",
+          "id" : 0,
+          "source_info" : {
+            "filename" : "spam_detection.p4",
+            "line" : 48,
+            "column" : 16,
+            "source_fragment" : "mta_dir_tmp == 1"
+          },
+          "expression" : {
+            "type" : "expression",
+            "value" : {
+              "op" : "==",
+              "left" : {
+                "type" : "field",
+                "value" : ["scalars", "mta_dir_tmp_0"]
+              },
+              "right" : {
+                "type" : "hexstr",
+                "value" : "0x00000001"
+              }
+            }
+          },
+          "true_next" : "tbl_spam_detection49",
+          "false_next" : "node_5"
+        },
+        {
+          "name" : "node_5",
+          "id" : 1,
+          "source_info" : {
+            "filename" : "spam_detection.p4",
+            "line" : 53,
+            "column" : 16,
+            "source_fragment" : "mta_dir_tmp == 2"
+          },
+          "expression" : {
+            "type" : "expression",
+            "value" : {
+              "op" : "==",
+              "left" : {
+                "type" : "field",
+                "value" : ["scalars", "mta_dir_tmp_0"]
+              },
+              "right" : {
+                "type" : "hexstr",
+                "value" : "0x00000002"
+              }
+            }
+          },
+          "true_next" : "tbl_spam_detection54",
+          "false_next" : "tbl_spam_detection60"
+        },
+        {
+          "name" : "node_7",
+          "id" : 2,
+          "source_info" : {
+            "filename" : "spam_detection.p4",
+            "line" : 55,
+            "column" : 20,
+            "source_fragment" : "mail_counter_tmp == THRESH"
+          },
+          "expression" : {
+            "type" : "expression",
+            "value" : {
+              "op" : "==",
+              "left" : {
+                "type" : "field",
+                "value" : ["scalars", "mail_counter_tmp_0"]
+              },
+              "right" : {
+                "type" : "hexstr",
+                "value" : "0x000003e8"
+              }
+            }
+          },
+          "true_next" : "tbl_spam_detection56",
+          "false_next" : "tbl_spam_detection60"
+        }
+      ]
+    },
+    {
+      "name" : "egress",
+      "id" : 1,
+      "source_info" : {
+        "filename" : "spam_detection.p4",
+        "line" : 66,
+        "column" : 8,
+        "source_fragment" : "MyEgress"
+      },
+      "init_table" : null,
+      "tables" : [],
+      "action_profiles" : [],
+      "conditionals" : []
+    }
+  ],
+  "checksums" : [],
+  "force_arith" : [],
+  "extern_instances" : [],
+  "field_aliases" : [
+    [
+      "queueing_metadata.enq_timestamp",
+      ["standard_metadata", "enq_timestamp"]
+    ],
+    [
+      "queueing_metadata.enq_qdepth",
+      ["standard_metadata", "enq_qdepth"]
+    ],
+    [
+      "queueing_metadata.deq_timedelta",
+      ["standard_metadata", "deq_timedelta"]
+    ],
+    [
+      "queueing_metadata.deq_qdepth",
+      ["standard_metadata", "deq_qdepth"]
+    ],
+    [
+      "intrinsic_metadata.ingress_global_timestamp",
+      ["standard_metadata", "ingress_global_timestamp"]
+    ],
+    [
+      "intrinsic_metadata.egress_global_timestamp",
+      ["standard_metadata", "egress_global_timestamp"]
+    ],
+    [
+      "intrinsic_metadata.mcast_grp",
+      ["standard_metadata", "mcast_grp"]
+    ],
+    [
+      "intrinsic_metadata.egress_rid",
+      ["standard_metadata", "egress_rid"]
+    ],
+    [
+      "intrinsic_metadata.priority",
+      ["standard_metadata", "priority"]
+    ]
+  ],
+  "program" : "./spam_detection.p4i",
+  "__meta__" : {
+    "version" : [2, 18],
+    "compiler" : "https://github.com/p4lang/p4c"
+  }
+}
