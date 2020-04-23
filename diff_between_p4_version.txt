@@ -1,0 +1,117 @@
+1.
+p4_14:
+header_type hop_metadata_t {
+    fields {
+        vrf : 12;
+        ipv6_prefix : 64;
+        next_hop_index : 16;
+        mcast_grp : 16;
+        urpf_fail : 1;
+        drop_reason : 8;
+    }
+}
+
+p4_16:
+header hop_metadata_t {
+        bit<12> vrf;
+        bit<64> ipv6_prefix;
+        bit<16> next_hop_index;
+        bit<16> mcast_grp;
+        bit<4> urpf_fail;
+        bit<8> drop_reason;
+}
+
+Note: the table size in p4_16 must be the multiple of 8
+
+2.
+P4_14
+action set_ipv6_prefix_xcast(bit<64> ipv6_prefix){
+    modify_field(hop_metadata.ipv6_prefix, ipv6_prefix);
+}
+
+P4_16
+action set_ipv6_prefix_xcast(bit<64> ipv6_prefix){
+    meta.hop_metadata.ipv6_prefix = ipv6_prefix;
+}
+
+3.
+P4_14:
+table check_ipv6 {
+    reads {
+        ipv6 : valid;
+    }
+    actions {
+        on_hit;
+        on_miss;
+    }
+    size : CHECK_IPV6_SIZE;
+}
+
+P4_16:
+table check_ipv6 {
+    key = {
+    }
+    actions = {
+        on_hit;
+        on_miss;
+    }
+    size = CHECK_IPV6_SIZE;
+}
+
+P4_16 does not support valid in read
+
+
+4.
+P4_14:
+apply(check_ipv6) {
+    on_hit {
+        apply(ipv6_prefix) {
+            set_ipv6_prefix_ucast {
+                apply(urpf_v6);
+                apply(ipv6_forwarding);
+            }
+            set_ipv6_prefix_xcast {
+                apply(ipv6_xcast_forwarding);
+            }
+        }
+    }
+    on_miss {
+        apply(check_ucast_ipv4) {
+            on_hit {
+                apply(urpf_v4);
+                apply(ipv4_forwarding);
+            }
+            on_miss {
+                apply(igmp_snooping);
+                apply(ipv4_xcast_forwarding);
+            }
+        }
+    }
+}
+
+P4_16:
+switch(check_ipv6.apply().action_run) {
+    on_hit : {
+        switch(ipv6_prefix.apply().action_run) {
+            set_ipv6_prefix_ucast : {
+                urpf_v6.apply();
+                ipv6_forwarding.apply();
+            }
+            set_ipv6_prefix_xcast : {
+                ipv6_xcast_forwarding.apply();
+            }
+        }
+    }
+    on_miss : {
+         switch(check_ucast_ipv4.apply().action_run) {
+             on_hit : {
+                 urpf_v4.apply();
+                 ipv4_forwarding.apply();
+             }
+             on_miss : {
+                 igmp_snooping.apply();
+                 ipv4_xcast_forwarding.apply();
+             }
+         }
+    }
+}
