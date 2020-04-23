@@ -22,10 +22,7 @@ limitations under the License.
 #include <v1model.p4>
 
 #include "defines.p4"
-// #include "parser.p4"
 #include "headers_16.p4"
-//#include "actions_16.p4"
-//#include "tables.p4"
 
 struct headers {
     ipv4_t                                  ipv4;
@@ -38,59 +35,19 @@ struct metadata {
     hop_metadata_t        hop_metadata;
 }
 
-action on_hit() {
-}
-action on_miss() {
-}
-action nop() {
-}
 action drop() {
 }
-/*
-action set_vrf(bit<12> vrf) {
-    hop_metadata.vrf = vrf;
+
+action nop() {
 }
 
-action set_ipv6_prefix_ucast(bit<64> ipv6_prefix){
-    modify_field(hop_metadata.ipv6_prefix, ipv6_prefix);
+action on_hit() {
 }
 
-action set_ipv6_prefix_xcast(bit<64> ipv6_prefix){
-    modify_field(hop_metadata.ipv6_prefix, ipv6_prefix);
+action on_miss() {
 }
 
-action set_next_hop(bit<16> dst_index) {
-    modify_field(hop_metadata.next_hop_index, dst_index);
-}
-
-action set_ethernet_addr(bit<48> smac, bit<48> dmac) {
-    modify_field(ethernet.srcAddr, smac);
-    modify_field(ethernet.dstAddr, dmac);
-}
-
-action set_multicast_replication_list(bit<16> mc_index) {
-    modify_field(hop_metadata.mcast_grp, mc_index);
-}
-
-action set_urpf_check_fail() {
-    modify_field(hop_metadata.urpf_fail, 1);
-}
-
-action urpf_check_fail() {
-    set_urpf_check_fail();
-    drop();
-}
-
-action set_egress_port(bit<9> e_port) {
-    modify_field(standard_metadata.egress_spec, e_port);
-}
-
-action action_drop(bit<8> drop_reason) {
-    modify_field(hop_metadata.drop_reason, drop_reason);
-    drop();
-}
-*/
-
+// TODO: improve the parser
 parser MyParser(packet_in packet,
                 out headers hdr,
                 inout metadata meta,
@@ -109,35 +66,153 @@ parser MyParser(packet_in packet,
 
 
 control process_ip(inout headers hdr, inout metadata meta, inout standard_metadata_t standard_metadata) {
-/*
-    apply(vrf);
-    apply(check_ipv6) {
-        on_hit {
-            apply(ipv6_prefix) {
-                set_ipv6_prefix_ucast {
-                    apply(urpf_v6);
-                    apply(ipv6_forwarding);
-                }
-                set_ipv6_prefix_xcast {
-                    apply(ipv6_xcast_forwarding);
-                }
-            }
+    table check_ipv6 {
+        key = {
         }
-        on_miss {
-            apply(check_ucast_ipv4) {
-                on_hit {
-                    apply(urpf_v4);
-                    apply(ipv4_forwarding);
-                }
-                on_miss {
-                    apply(igmp_snooping);
-                    apply(ipv4_xcast_forwarding);
-                }
-            }
+        actions = {
+            on_hit;
+            on_miss;
         }
-    }*/
-//    apply(acl); /* Perhaps right before routable */
-//    apply(next_hop);
+        size = CHECK_IPV6_SIZE;
+    }
+
+    action set_ipv6_prefix_ucast(bit<64> ipv6_prefix){
+        meta.hop_metadata.ipv6_prefix = ipv6_prefix;
+    }
+
+    action set_ipv6_prefix_xcast(bit<64> ipv6_prefix){
+        meta.hop_metadata.ipv6_prefix = ipv6_prefix;
+    }
+
+    table ipv6_prefix {
+        key = {
+            hdr.ipv6.dstAddr : lpm;
+        }
+        actions = {
+            set_ipv6_prefix_ucast;
+            set_ipv6_prefix_xcast;
+        }
+        size = IPv6_PREFIX_SIZE;
+    }
+
+    action set_next_hop(bit<16> dst_index) {
+	    meta.hop_metadata.next_hop_index = dst_index;
+    }
+
+    table ipv4_forwarding {
+        key = {
+            meta.hop_metadata.vrf : exact;
+            hdr.ipv4.dstAddr : lpm;
+        }
+        actions = {
+            set_next_hop;
+        }
+        size = IPV4_FORWARDING_SIZE;
+    }
+    
+    table ipv6_forwarding {
+        key = {
+            meta.hop_metadata.vrf : exact;
+            meta.hop_metadata.ipv6_prefix : exact;
+            hdr.ipv6.dstAddr : lpm;
+        }
+        actions = {
+            set_next_hop;
+        }
+        size = IPV6_FORWARDING_SIZE;
+    }
+
+    action set_multicast_replication_list(bit<16> mc_index) {
+        meta.hop_metadata.mcast_grp = mc_index;
+    }
+
+    table ipv4_xcast_forwarding {
+        key = {
+            hdr.vlan_tag_[0].vid : exact;
+            //Because multiple lpm is not supported hdr.ipv4.dstAddr : lpm;
+            hdr.ipv4.srcAddr : lpm;
+            standard_metadata.ingress_port : exact;
+        }
+        actions = {
+            set_multicast_replication_list;
+        }
+        size = IPV4_XCAST_FORWARDING_SIZE;
+    }
+
+    table ipv6_xcast_forwarding {
+        key = {
+            hdr.vlan_tag_[0].vid : exact;
+            //Because multiple lpm is not supported  hdr.ipv6.dstAddr : lpm;
+            hdr.ipv6.srcAddr : lpm;
+            standard_metadata.ingress_port : exact;
+        }
+        actions = {
+            set_multicast_replication_list;
+        }
+        size = IPV6_XCAST_FORWARDING_SIZE;
+    }
+
+    action set_urpf_check_fail() {
+        meta.hop_metadata.urpf_fail = 1;
+    }
+
+    action urpf_check_fail() {
+        set_urpf_check_fail();
+        drop();
+    }
+    
+    table igmp_snooping {
+        key = {
+            hdr.ipv4.dstAddr : lpm;
+            hdr.vlan_tag_[0].vid : exact;
+            standard_metadata.ingress_port : exact;
+        }
+        actions = {
+            nop; /* FIX */
+        }
+        size = IGMP_SNOOPING_SIZE;
+    }
+    
+    table urpf_v4 {
+        key = {
+            hdr.vlan_tag_[0].vid : exact;
+            standard_metadata.ingress_port : exact;
+            hdr.ipv4.srcAddr : exact;
+        }
+        actions = {
+            urpf_check_fail;
+            nop;
+        }
+        size = URPF_V4_SIZE;
+    }
+
+    table check_ucast_ipv4 {
+        key = {
+            hdr.ipv4.dstAddr : exact;
+        }
+        actions = {
+            on_hit;
+            on_miss;
+        }
+        size = CHECK_UCAST_IPV4_SIZE;
+    }
+
+    table urpf_v6 {
+        key = {
+            hdr.vlan_tag_[0].vid : exact;
+            standard_metadata.ingress_port : exact;
+            hdr.ipv6.srcAddr : exact;
+        }
+        actions = {
+            urpf_check_fail;
+            nop;
+        }
+        size = URPF_V6_SIZE;
+    }
+
+    action set_egress_port(bit<9> e_port) {
+        standard_metadata.egress_spec = e_port;
+    }
 
     action set_vrf(bit<12> vrf) {
         meta.hop_metadata.vrf = vrf;
@@ -145,8 +220,7 @@ control process_ip(inout headers hdr, inout metadata meta, inout standard_metada
 
     table vrf {
         key = {
-            // hdr.vlan_tag_[0] : exact;
-            // hdr.vlan_tag_[0].vid : exact;
+            hdr.vlan_tag_[0].vid : exact;
             hdr.ethernet.srcAddr : exact;
             standard_metadata.ingress_port : exact;
         }
@@ -162,7 +236,7 @@ control process_ip(inout headers hdr, inout metadata meta, inout standard_metada
     }
     table acl {
        key = {
-           hdr.ipv4.srcAddr : lpm;
+           //Because multiple lpm is not supported hdr.ipv4.srcAddr : lpm;
            hdr.ipv4.dstAddr : lpm;
            hdr.ethernet.srcAddr : exact;
            hdr.ethernet.dstAddr : exact;
@@ -188,8 +262,35 @@ control process_ip(inout headers hdr, inout metadata meta, inout standard_metada
     }
     
     apply {
+        vrf.apply();
+        switch(check_ipv6.apply().action_run) {
+            on_hit : {
+                switch(ipv6_prefix.apply().action_run) {
+                    set_ipv6_prefix_ucast : {
+                        urpf_v6.apply();
+                        ipv6_forwarding.apply();
+                    }
+                    set_ipv6_prefix_xcast : {
+                        ipv6_xcast_forwarding.apply();
+                    }
+                }
+            }
+            on_miss : {
+                 switch(check_ucast_ipv4.apply().action_run) {
+                     on_hit : {
+                         urpf_v4.apply();
+                         ipv4_forwarding.apply();
+                     }
+                     on_miss : {
+                         igmp_snooping.apply();
+                         ipv4_xcast_forwarding.apply();
+                     }
+                 }
+            } 
+        } 
+
+        acl.apply();
         next_hop.apply();
-        acl.apply();        
     }
 }
 
@@ -202,16 +303,57 @@ control MyVerifyChecksum(inout headers hdr, inout metadata meta) {
 control ingress(inout headers hdr,
                   inout metadata meta,
                   inout standard_metadata_t standard_metadata) {
-/*
-    apply(smac_vlan);
-    apply(routable) {
-        on_hit {
-            process_ip();
+
+    table smac_vlan {
+        key = {
+            hdr.ethernet.srcAddr : exact;
+            standard_metadata.ingress_port : exact;
         }
+        actions = {
+            nop; /* FIX */
+        }
+        size = SMAC_VLAN_SIZE;
     }
-    apply(dmac_vlan);
-*/
+    
+    table routable {
+        actions = {
+            on_hit;
+            on_miss;
+        }
+        key = {
+            hdr.vlan_tag_[0].vid : exact;
+            standard_metadata.ingress_port : exact;
+            hdr.ethernet.dstAddr : exact;
+            hdr.ethernet.etherType : exact;
+        }
+        size = ROUTABLE_SIZE;
+    }
+
+    action set_egress_port(bit<9> e_port) {
+        standard_metadata.egress_spec = e_port;
+    }
+
+    table dmac_vlan {
+        key = {
+            hdr.ethernet.dstAddr : exact;
+            hdr.vlan_tag_[0].vid : exact;
+            standard_metadata.ingress_port : exact;
+        }
+        actions = {
+            set_egress_port;
+        }
+        size = DMAC_VLAN_SIZE;
+    }
+    @name(".process_ip") process_ip() process_ip_0;
+
     apply {
+        smac_vlan.apply();
+        switch(routable.apply().action_run) {
+            on_hit : {
+                process_ip_0.apply(hdr, meta, standard_metadata);
+            }
+        }
+        dmac_vlan.apply();
     }
 }
 
