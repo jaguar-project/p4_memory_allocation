@@ -24,6 +24,10 @@ limitations under the License.
 #include "defines.p4"
 #include "headers_16.p4"
 
+register<bit<32>>(1) count;
+
+const bit<32> N = 30;
+
 struct headers {
     ipv4_t                                  ipv4;
     ipv6_t                                  ipv6;
@@ -33,6 +37,7 @@ struct headers {
 
 struct metadata {
     hop_metadata_t        hop_metadata;
+    bit<32>               sample;
 }
 
 action drop() {
@@ -346,6 +351,29 @@ control ingress(inout headers hdr,
     }
     @name(".process_ip") process_ip() process_ip_0;
 
+    action set_pkt() {
+        @atomic{
+            bit<32> count_tmp;
+            count.read(count_tmp, 0);
+            if (count_tmp == N - 1) {
+                meta.sample = 1;
+                count_tmp = 0;
+            } else {
+                meta.sample = 0;
+                count_tmp = count_tmp + 1;
+            }
+            count.write(0, count_tmp);
+        }
+    }
+
+    table sample {
+        key = {
+        }
+        actions = {
+            set_pkt;
+        }
+    } 
+
     apply {
         smac_vlan.apply();
         switch(routable.apply().action_run) {
@@ -354,6 +382,7 @@ control ingress(inout headers hdr,
             }
         }
         dmac_vlan.apply();
+        sample.apply();
     }
 }
 
