@@ -73,6 +73,7 @@ header ipv6_t {
         bit<128> dstAddr;
 }
 
+
 header icmp_t {
         bit<8> type_;
         bit<8> code;
@@ -119,3 +120,4 @@ header arp_rarp_t {
         bit<8> protoAddrLen;
         bit<16> opcode;
 }
+
