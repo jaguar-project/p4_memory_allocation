@@ -161,10 +161,10 @@ control process_ip(inout headers hdr, inout metadata meta, inout standard_metada
         meta.hop_metadata.urpf_fail = 1;
     }
 
-    action urpf_check_fail() {
+    /* action urpf_check_fail() {
         set_urpf_check_fail();
         drop();
-    }
+    } */
     
     table igmp_snooping {
         key = {
@@ -185,7 +185,7 @@ control process_ip(inout headers hdr, inout metadata meta, inout standard_metada
             hdr.ipv4.srcAddr : exact;
         }
         actions = {
-            urpf_check_fail;
+            // urpf_check_fail;
             nop;
         }
         size = URPF_V4_SIZE;
@@ -209,7 +209,7 @@ control process_ip(inout headers hdr, inout metadata meta, inout standard_metada
             hdr.ipv6.srcAddr : exact;
         }
         actions = {
-            urpf_check_fail;
+            // urpf_check_fail;
             nop;
         }
         size = URPF_V6_SIZE;
@@ -315,7 +315,7 @@ control ingress(inout headers hdr,
             standard_metadata.ingress_port : exact;
         }
         actions = {
-            nop; /* FIX */
+            // nop; /* FIX */
         }
         size = SMAC_VLAN_SIZE;
     }
